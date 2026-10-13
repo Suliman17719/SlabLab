@@ -1,86 +1,126 @@
-const V = 'slablab-v0.6';
+const V = 'slablab-v0.7';
 
-const FILES = [
+const CORE_FILES = [
   './',
-  'index.html',
-  'app.js',
-  'engine.js',
-  'engine2.js',
-  'style.css',
-
-  'manifest.json',
-  'manifest.webmanifest',
-
-  'icon-192.png',
-  'icon-512.png',
-
-  'fonts/Poppins-Regular.ttf',
-  'fonts/Poppins-Medium.ttf',
-  'fonts/Poppins-Bold.ttf',
-
-  'icons/icon-192.png',
-  'icons/icon-512.png',
-  'icons/maskable-512.png',
-  'icons/apple-touch-icon.png'
+  './index.html',
+  './app.js',
+  './engine.js',
+  './engine2.js',
+  './style.css'
 ];
 
-// Install: cache the application files
+const OPTIONAL_FILES = [
+  './manifest.json',
+  './manifest.webmanifest',
+  './icon-192.png',
+  './icon-512.png',
+  './fonts/Poppins-Regular.ttf',
+  './fonts/Poppins-Medium.ttf',
+  './fonts/Poppins-Bold.ttf',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './icons/maskable-512.png',
+  './icons/apple-touch-icon.png'
+];
+
+// Install and cache essential files first
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(V)
-      .then(cache => cache.addAll(FILES))
-      .then(() => self.skipWaiting())
-      .catch(error => {
-        console.error('SlabLab cache installation failed:', error);
-        throw error;
-      })
+    (async () => {
+      const cache = await caches.open(V);
+
+      // Essential files must be cached successfully
+      for (const file of CORE_FILES) {
+        const response = await fetch(file, { cache: 'reload' });
+
+        if (!response.ok) {
+          throw new Error(
+            'Failed to cache essential file: ' + file
+          );
+        }
+
+        await cache.put(file, response);
+      }
+
+      // Optional files are cached independently
+      await Promise.all(
+        OPTIONAL_FILES.map(async file => {
+          try {
+            await cache.add(file);
+          } catch (error) {
+            console.warn(
+              'Optional file was not cached:',
+              file,
+              error
+            );
+          }
+        })
+      );
+
+      await self.skipWaiting();
+    })()
   );
 });
 
-// Activate: remove old application caches
+// Activate the new version
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys()
-      .then(keys =>
-        Promise.all(
-          keys
-            .filter(key => key.startsWith('slablab-') && key !== V)
-            .map(key => caches.delete(key))
-        )
-      )
-      .then(() => self.clients.claim())
+    (async () => {
+      const keys = await caches.keys();
+
+      await Promise.all(
+        keys
+          .filter(
+            key =>
+              key.startsWith('slablab-') &&
+              key !== V
+          )
+          .map(key => caches.delete(key))
+      );
+
+      await self.clients.claim();
+    })()
   );
 });
 
-// Fetch: serve cached files when offline
+// Serve cached files when offline
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
-  const requestURL = new URL(event.request.url);
+  const url = new URL(event.request.url);
 
-  // Do not intercept requests to other websites
-  if (requestURL.origin !== self.location.origin) return;
+  if (url.origin !== self.location.origin) return;
 
   event.respondWith(
-    caches.match(event.request, { ignoreSearch: true })
-      .then(cachedResponse => {
-        if (cachedResponse) {
-          return cachedResponse;
-        }
+    (async () => {
+      const cache = await caches.open(V);
 
-        // If not cached, try the network
-        return fetch(event.request);
-      })
-      .catch(() => {
-        // Provide the cached app page when navigation fails offline
+      const cached = await cache.match(
+        event.request,
+        { ignoreSearch: true }
+      );
+
+      if (cached) return cached;
+
+      try {
+        return await fetch(event.request);
+      } catch (error) {
         if (event.request.mode === 'navigate') {
-          return caches.match('./index.html');
+          const page =
+            await cache.match('./index.html') ||
+            await cache.match('./');
+
+          if (page) return page;
         }
 
-        return new Response('You are offline and this file is not cached.', {
-          status: 503,
-          statusText: 'Offline'
-        });
-      })
+        return new Response(
+          'This resource is unavailable offline.',
+          {
+            status: 503,
+            statusText: 'Offline'
+          }
+        );
+      }
+    })()
   );
 });
