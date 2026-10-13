@@ -1,68 +1,80 @@
-const V = 'slablab-v0.7';
+const V = 'slablab-v0.8';
 
 const CORE_FILES = [
   './',
-  './index.html',
-  './app.js',
-  './engine.js',
-  './engine2.js',
-  './style.css'
+  'index.html',
+  'app.js',
+  'engine.js',
+  'engine2.js',
+  'style.css'
 ];
 
 const OPTIONAL_FILES = [
-  './manifest.json',
-  './manifest.webmanifest',
-  './icon-192.png',
-  './icon-512.png',
-  './fonts/Poppins-Regular.ttf',
-  './fonts/Poppins-Medium.ttf',
-  './fonts/Poppins-Bold.ttf',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
-  './icons/maskable-512.png',
-  './icons/apple-touch-icon.png'
+  'manifest.json',
+  'manifest.webmanifest',
+  'icon-192.png',
+  'icon-512.png',
+  'fonts/Poppins-Regular.ttf',
+  'fonts/Poppins-Medium.ttf',
+  'fonts/Poppins-Bold.ttf',
+  'icons/icon-192.png',
+  'icons/icon-512.png',
+  'icons/maskable-512.png',
+  'icons/apple-touch-icon.png'
 ];
 
-// Install and cache essential files first
+async function cacheFile(cache, file, required) {
+  const url = new URL(file, self.registration.scope);
+
+  const response = await fetch(url.href, {
+    cache: 'reload'
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      'Failed to fetch ' + url.href +
+      ': HTTP ' + response.status
+    );
+  }
+
+  await cache.put(url.href, response.clone());
+}
+
 self.addEventListener('install', event => {
   event.waitUntil(
     (async () => {
       const cache = await caches.open(V);
 
-      // Essential files must be cached successfully
-      for (const file of CORE_FILES) {
-        const response = await fetch(file, { cache: 'reload' });
-
-        if (!response.ok) {
-          throw new Error(
-            'Failed to cache essential file: ' + file
-          );
+      try {
+        for (const file of CORE_FILES) {
+          await cacheFile(cache, file, true);
         }
 
-        await cache.put(file, response);
-      }
-
-      // Optional files are cached independently
-      await Promise.all(
-        OPTIONAL_FILES.map(async file => {
+        for (const file of OPTIONAL_FILES) {
           try {
-            await cache.add(file);
+            await cacheFile(cache, file, false);
           } catch (error) {
             console.warn(
-              'Optional file was not cached:',
+              'Optional file not cached:',
               file,
               error
             );
           }
-        })
-      );
+        }
 
-      await self.skipWaiting();
+        await self.skipWaiting();
+      } catch (error) {
+        await caches.delete(V);
+        console.error(
+          'SlabLab offline installation failed:',
+          error
+        );
+        throw error;
+      }
     })()
   );
 });
 
-// Activate the new version
 self.addEventListener('activate', event => {
   event.waitUntil(
     (async () => {
@@ -83,7 +95,6 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Serve cached files when offline
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
@@ -93,9 +104,7 @@ self.addEventListener('fetch', event => {
 
   event.respondWith(
     (async () => {
-      const cache = await caches.open(V);
-
-      const cached = await cache.match(
+      const cached = await caches.match(
         event.request,
         { ignoreSearch: true }
       );
@@ -106,15 +115,19 @@ self.addEventListener('fetch', event => {
         return await fetch(event.request);
       } catch (error) {
         if (event.request.mode === 'navigate') {
+          const cache = await caches.open(V);
+
           const page =
-            await cache.match('./index.html') ||
-            await cache.match('./');
+            await cache.match(
+              new URL('index.html', self.registration.scope).href
+            ) ||
+            await cache.match(self.registration.scope);
 
           if (page) return page;
         }
 
         return new Response(
-          'This resource is unavailable offline.',
+          'This resource is not available offline.',
           {
             status: 503,
             statusText: 'Offline'
