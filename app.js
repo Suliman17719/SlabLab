@@ -102,11 +102,9 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(!t
  else if(a==='save'){if(S.kind==='irr'){const R=S.R3;S.saved=S.saved.filter(x=>x.id!==S.inp3.id);S.saved.unshift({kind:'irr',id:S.inp3.id,cs:R.mode,L:g(R.A,1)+' m²',bars:R.fsx?R.fsx.txt:'-',st:R.st.overall,inp:JSON.parse(JSON.stringify(S.inp3))});}else if(S.kind==='two'){const R=S.R2;S.saved=S.saved.filter(x=>x.id!==S.inp2.id);S.saved.unshift({kind:'two',id:S.inp2.id,cs:'Type '+R.cn,L:Math.round(R.lxs)+' × '+Math.round(R.lys),bars:R.fsx?R.fsx.txt:'-',st:R.st.overall,inp:Object.assign({},S.inp2)});}else{const R=S.R;S.saved=S.saved.filter(x=>x.id!==S.inp.id);S.saved.unshift({id:S.inp.id,cs:R.cu+(R.meth?' · strip':''),L:S.inp.L,bars:R.fs?R.fs.txt:'-',st:R.st.overall,inp:Object.assign({},S.inp)});}LS.setItem('sl_saved',JSON.stringify(S.saved));toast('Saved to project');}
  else if(a==='open'){const x=S.saved[+v];if(x.kind==='irr'){S.inp3=JSON.parse(JSON.stringify(x.inp));calc3();}else if(x.kind==='two'){Object.assign(S.inp2,x.inp);calc2();}else{Object.assign(S.inp,x.inp);calc();}}});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').then(()=>setTimeout(()=>{if(S.route==='settings')render();},1200)).catch(()=>{});
-console.log('SlabLab routes:', {
-  input2: typeof V.input2,
-  input3: typeof V.input3,
-  new2: typeof go,
-  new3: typeof go
-});
+toast(
+  'input2: ' + typeof V.input2 +
+  ' | input3: ' + typeof V.input3
+);
 render();
 })();
