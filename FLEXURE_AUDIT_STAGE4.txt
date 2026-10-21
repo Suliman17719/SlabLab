@@ -1,0 +1,32 @@
+SlabLab — Flexure formula audit (Stage 4)
+
+Scope
+- Reviewed the one-way flexure implementation in engine.js and its use by engine2.js.
+- This is a focused formula audit, not certification of the app or full code compliance.
+
+Finding fixed
+1) Default tensile strength was inconsistent with the default concrete strength.
+   Default fck = 25 MPa corresponds to concrete class C25/30 under EN 1992-1-1:2004.
+   The recommended mean axial tensile strength fctm for C25/30 is 2.6 MPa, not 2.9 MPa.
+   Changed default fctm from 2.9 to 2.6 MPa. The input remains editable; if users change fck,
+   they must ensure fctm matches the selected concrete class (or it should be automated in a later UI change).
+
+Flexure equations reviewed
+- d = h - cover - phi/2: correct for the stated slab-strip assumptions when cover is to the bar surface.
+- K = MEd*10^6 / (b*d^2*fck): dimensionally correct for the EC2 rectangular stress-block formulation used here.
+- z = min(0.95d, d*(0.5 + sqrt(0.25 - K/(2*alpha_cc/gamma_c)))): algebra is consistent for K <= Klim.
+- As = K*fck*b*d^2/(fyd*z): correct for singly reinforced flexure when K is within the configured limit.
+- As,min = max(0.26*fctm/fyk*b*d, 0.0013*b*d): consistent with EN 1992-1-1:2004 §9.2.1.1 for the usual slab-strip case.
+- If K > K', the routine reports NOT OK and returns only a capped preliminary steel area; this must not be treated as a final design. Compression reinforcement / section redesign is not calculated.
+- The 4% gross concrete-area maximum is a configurable screening limit, not a universal unconditional acceptance rule; lap zones and National Annex provisions may require different handling.
+
+Open items (not changed in this stage)
+- Anchorage and lap-length formulas need a separate EC2 §8.4/§8.7 review; current lap calculation does not explicitly implement all alpha factors and the minimum lap expression.
+- Crack-control stress and bar-spacing table implementation need verification against the selected EN edition and National Annex.
+- fctm does not automatically update when fck is edited; user must keep the two inputs consistent.
+- Design checks still need a complete status audit so no missing check can be interpreted as an overall pass.
+
+Validation performed
+- JavaScript syntax checks for engine.js, engine2.js, app.js.
+- Numerical smoke tests for positive flexure, K above the limit, and a two-way slab calculation.
+- These tests confirm software execution and expected status behavior only; they do not constitute independent design certification.

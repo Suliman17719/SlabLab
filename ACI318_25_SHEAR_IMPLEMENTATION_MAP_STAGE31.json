@@ -1,0 +1,50 @@
+{
+  "stage": 31,
+  "code": "ACI 318-25",
+  "status": "traceability-only; no numerical shear calculation is implemented",
+  "units": "SI (MPa, mm, N)",
+  "provisions": [
+    {
+      "check": "one-way shear demand and critical-section location for one-way slabs",
+      "references": ["7.4.3", "22.5"],
+      "implementation_requirements": [
+        "Determine the factored shear demand at the applicable critical section from the actual support/load arrangement.",
+        "Use the correct Chapter 22 concrete shear-strength model for the applicable member category.",
+        "Account for size-effect and longitudinal-reinforcement terms where required by the 2025 edition.",
+        "Check minimum shear reinforcement and its exceptions separately from nominal concrete strength.",
+        "Do not apply the simplified shallow-foundation exception to ordinary suspended slabs."
+      ]
+    },
+    {
+      "check": "two-way (punching) shear at columns, concentrated loads, and reaction areas",
+      "references": ["8.4.4", "8.5.3.1.2", "22.6"],
+      "implementation_requirements": [
+        "Construct the applicable critical perimeter from support/load geometry and effective depth.",
+        "Account for openings, edges, corners, nearby supports, and overlapping perimeters where applicable.",
+        "Evaluate eccentric shear and transferred unbalanced moment when applicable.",
+        "Distinguish slabs with no shear reinforcement from permitted shear-reinforcement systems.",
+        "Check all governing critical sections and applicable maximum-strength limits."
+      ]
+    },
+    {
+      "check": "strength reduction factor and material applicability",
+      "references": ["19.2", "20.2", "21.2", "22.5", "22.6"],
+      "implementation_requirements": [
+        "Resolve concrete type and lightweight-concrete modification factors from the governing provisions.",
+        "Apply the correct shear strength-reduction factor for the member and design situation.",
+        "Reject unsupported material/member cases rather than silently applying a default formula."
+      ]
+    }
+  ],
+  "known_2025-edition_review_item": "Do not reuse ACI 318-19 one-way-shear assumptions without checking the ACI 318-25 provisions. Published technical commentary notes changes to the longitudinal-reinforcement ratio treatment and a lower bound for Vc in specified cases; exact applicability and equations must be checked against the licensed Code Requirements text before implementation.",
+  "safety_gate": {
+    "aci_full_design_enabled": false,
+    "punching_shear_enabled": false,
+    "one_way_shear_enabled": false,
+    "reason": "Clause mapping is not a verified numerical implementation; the applicable licensed Code Requirements text and independent benchmark calculations are still required."
+  },
+  "source_notes": [
+    "ACI CODE-318-25, Building Code Requirements for Structural Concrete and Commentary: official ACI product/portal information identifies the edition; applicable clause text must be verified from an authorized copy.",
+    "StructurePoint, ACI 318-25 Code Revisions Impact on StructurePoint Software, published 2026: secondary technical discussion of selected Chapter 22 one-way shear revisions; use as a review prompt, not as a substitute for the Code."
+  ]
+}

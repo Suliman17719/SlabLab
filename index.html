@@ -1,0 +1,14 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0A0F0D">
+<title>SlabLab</title><link rel="manifest" href="./manifest.json"><link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="SlabLab"><link rel="stylesheet" href="style.css"></head>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .catch(error => {
+        console.error('Service Worker registration failed:', error);
+      });
+  });
+}
+</script><body><div id="app"></div><script src="engine.js"></script><script src="engine2.js"></script><script src="aci318-25-engine.js"></script><script src="sbc304-2024-engine.js"></script><script src="code-registry.js"></script><script src="strip.js"></script><script src="lessons.js"></script><script src="app.js"></script></body></html>
